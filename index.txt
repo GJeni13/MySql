@@ -3,8 +3,8 @@ Task:
     The system should have three tables: customers, orders, and products.
 
 Step 1: Create the Database
-
     -- Create the e-commerce database
+    
 CREATE DATABASE ecommerce;
 USE ecommerce;
 
