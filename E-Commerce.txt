@@ -1,0 +1,232 @@
+Task:
+    Create a database and tables to manage a simple e-commerce system. 
+    The system should have three tables: customers, orders, and products.
+
+Step 1: Create the Database
+
+    -- Create the e-commerce database
+CREATE DATABASE ecommerce;
+USE ecommerce;
+
+Step 2: Create the Tables 
+
+    -- Create the customers table
+CREATE TABLE customers (
+    id INT AUTO_INCREMENT PRIMARY KEY, -- Unique identifier for each customer
+    name VARCHAR(100) NOT NULL,         -- Customer's name
+    email VARCHAR(100) NOT NULL UNIQUE,  -- Customer's email address
+    address VARCHAR(255) NOT NULL        -- Customer's address
+);
+
+-- Create the products table
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY, -- Unique identifier for each product
+    name VARCHAR(100) NOT NULL,         -- Product's name
+    price DECIMAL(10, 2) NOT NULL,      -- Product's price
+    description TEXT                    -- Product's description
+);
+
+-- Create the orders table
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,    -- Unique identifier for each order
+    customer_id INT,                      -- Reference to the customer who placed the order
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP, -- Date the order was placed
+    total_amount DECIMAL(10, 2) NOT NULL, -- Total amount of the order
+    FOREIGN KEY (customer_id) REFERENCES customers(id) -- Foreign key constraint
+);
+
+Step 3: Insert Sample Data
+       1. -- Insert sample data into customers
+INSERT INTO customers (name, email, address) VALUES 
+('jeni', 'jeni@gmail.com', '1A,mainroad,Tirunelveli'),
+('jebastin', 'jebaboy@gmail.com', '2B,Northstreet,Madurai'),
+('Roslin', 'rose@gmail.com', '243,middlestreet,Coimbatore');
+
+-- Retrive sample data
+
+SELECT * FROM customers;
+id  name         email                       address
+1	jeni	    jeni@gmail.com	        1A,mainroad,Tirunelveli
+2	jebastin	jebaboy@gmail.com	    2B,Northstreet,Madurai
+3	Roslin	    rose@gmail.com	        243,middlestreet,Coimbatore
+
+        2.-- Insert sample data into products
+INSERT INTO products (name, price, description) VALUES 
+('Product A', 30.00, 'Description for Product A'),
+('Product B', 20.00, 'Description for Product B'),
+('Product C', 50.00, 'Description for Product C');
+
+-- Retrive sample data
+
+SELECT * FROM products;
+id  name        price   description
+1	Product A	30.00	Description for Product A
+2	Product B	20.00	Description for Product B
+3	Product C	50.00	Description for Product C
+			
+            -- Insert sample data into orders
+INSERT INTO orders (customer_id, total_amount) VALUES 
+(1, 150.00), 
+(2, 75.00),
+(1, 200.00);
+
+-- Retrive sample data
+
+SELECT * FROM orders;
+id  customer_id     order_date               total_amount
+1	    1	        2024-10-08 13:29:01     	150.00
+2	    2	        2024-10-08 13:29:01	        75.00
+3	    1	        2024-10-08 13:29:01	        200.00
+
+Step 4: Write the Queries
+
+-- 1. Retrieve all customers who have placed an order in the last 30 days.
+
+SELECT DISTINCT c.*
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+WHERE o.order_date >= NOW() - INTERVAL 30 DAY;
+
+id  name         email               address
+1	jeni	    jeni@gmail.com	    1A,mainroad,Tirunelveli
+2	jebastin	jebaboy@gmail.com	2B,Northstreet,Madurai
+
+-- 2. Get the total amount of all orders placed by each customer.
+
+SELECT c.name, SUM(o.total_amount) AS total_spent
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id;
+
+name    total_spent
+jeni	    350.00
+jebastin	75.00
+
+-- 3. Update the price of Product C to 45.00.
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE products
+SET price = 45.00
+WHERE name = 'Product C';
+
+select * from products;
+
+id  name        price       description
+1	Product A	30.00	Description for Product A
+2	Product B	20.00	Description for Product B
+3	Product C	45.00	Description for Product C
+
+-- 4. Add a new column discount to the products table.
+ALTER TABLE products
+ADD COLUMN discount DECIMAL(10, 2) DEFAULT 0;
+
+SELECT * FROM products;
+
+id  name        price       description             discount
+1	Product A	30.00	Description for Product A	0.00
+2	Product B	20.00	Description for Product B	0.00
+3	Product C	45.00	Description for Product C	0.00
+				
+ -- 5. Retrieve the top 3 products with the highest price.
+SELECT *
+FROM products
+ORDER BY price DESC
+LIMIT 3;
+
+id  name        price       description             discount
+3	Product C	45.00	Description for Product C	0.00
+1	Product A	30.00	Description for Product A	0.00
+2	Product B	20.00	Description for Product B	0.00
+				
+-- 6. Get the names of customers who have ordered Product A.
+-- Create the order_items table
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY, -- Unique identifier for each order item
+    order_id INT NOT NULL,             -- Reference to the order
+    product_id INT NOT NULL,           -- Reference to the product
+    quantity INT NOT NULL DEFAULT 1,   -- Quantity of the product ordered
+    FOREIGN KEY (order_id) REFERENCES orders(id), -- Foreign key linking to orders
+    FOREIGN KEY (product_id) REFERENCES products(id) -- Foreign key linking to products
+);
+-- Insert sample data into order_items
+
+INSERT INTO order_items (order_id, product_id, quantity) VALUES
+(1, 1, 2), -- Order 1 includes 2 units of Product A
+(2, 2, 1), -- Order 2 includes 1 unit of Product B
+(3, 1, 1), -- Order 3 includes 1 unit of Product A
+
+
+SELECT DISTINCT c.name
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE p.name = 'Product A';
+			
+-- 7. Join the orders and customers tables to retrieve the customer's name and order date for each order.
+SELECT c.name, o.order_date
+FROM customers c
+JOIN orders o ON c.id = o.customer_id;
+
+name        order_date
+jeni	    2024-10-08 13:36:02
+jebastin	2024-10-08 13:36:02
+jeni	    2024-10-08 13:36:02
+
+-- 8. Retrieve the orders with a total amount greater than 150.00.
+SELECT *
+FROM orders
+WHERE total_amount > 150.00;
+
+id  customer_id  order_date              total_amount
+3		NULL       2024-10-08 13:29:01	      200.00
+6	    1	     2024-10-08 13:36:02	      200.00
+
+-- 9. Normalize the database by creating a separate table for order items and updating the orders table.
+
+    -- Drop the existing order_items table
+DROP TABLE IF EXISTS order_items;
+
+-- Recreate the order_items table
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    product_id INT,
+    quantity INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Insert sample data into order_items
+INSERT INTO order_items (order_id, product_id, quantity) VALUES
+(1, 1, 2), -- Order 1 includes 2 units of Product A
+(2, 2, 1), -- Order 2 includes 1 unit of Product B
+(3, 1, 1), -- Order 3 includes 1 unit of Product A
+(3, 3, 1); -- Order 3 includes 1 unit of Product C
+
+-- 10. Retrieve the average total of all orders.
+
+SELECT AVG(total_amount) AS average_order_total
+FROM orders;
+
+average_order_total
+141.666667
+
+Explanation of Queries:
+
+    1. Retrieve customers with recent orders: Joins customers and orders to find distinct customers who have placed an order in the last 30 days.
+    2. Total amount by customer: Sums the total amount spent by each customer.
+    3. Update product price: Changes the price of Product C to 45.00.
+    4. Add discount column: Adds a new column for discounts in the products table.
+    5. Top 3 products: Retrieves the top three products based on price.
+    6. Customers who ordered Product A: Finds the names of customers who ordered Product A through a join.
+    7. Customer names and order dates: Retrieves names and order dates from the orders and customers tables.
+    8. Orders greater than 150.00: Selects orders where the total amount exceeds 150.00.
+    9. Normalize with order items: Creates a new order_items table to separate order details and update references.
+   10. Average total of orders: Calculates the average total amount of all orders.
+
+This structure and these queries should give you a solid foundation for managing an e-commerce system in MySQL.
+
+
+
